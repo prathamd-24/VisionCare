@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Activity, Smile, Thermometer } from 'lucide-react';
+import { Eye, Activity, Thermometer, Brain } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
 
 export function MetricsCards() {
@@ -94,15 +94,31 @@ export function MetricsCards() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border-l-4 border-green-500 transition-colors">
-        <div className="flex items-center gap-2 mb-2">
-          <Smile className="w-5 h-5 text-green-500" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Dominant Emotion</h3>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-green-500" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">AI Emotion</h3>
+          </div>
+          <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+            Live
+          </span>
         </div>
         <div className={`text-3xl font-bold capitalize ${getEmotionColor(getDominantEmotion())}`}>
           {getDominantEmotion()}
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">
-          {(liveMetrics.emotion[getDominantEmotion() as keyof typeof liveMetrics.emotion] * 100).toFixed(0)}% confidence
+        <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+          {(liveMetrics.emotion[getDominantEmotion() as keyof typeof liveMetrics.emotion] * 100).toFixed(1)}% confidence
+        </div>
+        <div className="space-y-1">
+          {Object.entries(liveMetrics.emotion)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 3)
+            .map(([emotion, value]) => (
+              <div key={emotion} className="flex justify-between text-xs">
+                <span className="capitalize opacity-70">{emotion}:</span>
+                <span className="font-semibold">{(value * 100).toFixed(0)}%</span>
+              </div>
+            ))}
         </div>
       </div>
 
