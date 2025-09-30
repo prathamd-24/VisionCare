@@ -74,18 +74,23 @@ export function MetricsCards() {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <Eye className="w-5 h-5 text-red-500" />
-            <h3 className="font-semibold text-gray-900 dark:text-white">Eye Redness</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-white">AI Eye Redness</h3>
           </div>
-          {getEyeRednessStatus() === 'warning' && (
-            <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full">
-              Anomaly
+          <div className="flex items-center gap-2">
+            {getEyeRednessStatus() === 'warning' && (
+              <span className="text-xs px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 rounded-full">
+                Anomaly
+              </span>
+            )}
+            <span className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full">
+              Live
             </span>
-          )}
+          </div>
         </div>
         <div className="text-3xl font-bold text-gray-900 dark:text-white">
           {(liveMetrics.eyeRedness * 100).toFixed(0)}%
         </div>
-        <div className="text-sm text-gray-600 dark:text-gray-400">redness level</div>
+        <div className="text-sm text-gray-600 dark:text-gray-400">AI-detected redness level</div>
         {baseline?.eyeRedness && (
           <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
             Baseline: {(baseline.eyeRedness.mean * 100).toFixed(0)}%

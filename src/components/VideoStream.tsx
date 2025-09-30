@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Camera, CameraOff, Play, Square, Brain } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
-import { captureFrameAsBase64, detectEmotionFromImage, mapRoboflowToEmotions } from '../utils/emotionDetection';
+import { captureFrameAsBase64, performCombinedDetection } from '../utils/emotionDetection';
 
 export function VideoStream() {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -23,8 +23,8 @@ export function VideoStream() {
     };
   }, []);
 
-  // Function to detect emotions from current video frame
-  const detectEmotionFromCurrentFrame = async () => {
+  // Function to detect emotions and eye redness from current video frame
+  const detectFromCurrentFrame = async () => {
     if (!videoRef.current || videoRef.current.readyState < 2) {
       return;
     }
@@ -32,15 +32,17 @@ export function VideoStream() {
     try {
       setIsProcessingEmotion(true);
       const base64Image = captureFrameAsBase64(videoRef.current);
-      const response = await detectEmotionFromImage(base64Image);
-      const emotions = mapRoboflowToEmotions(response.predictions);
+      const result = await performCombinedDetection(base64Image);
       
-      addEmotionPoint(emotions);
+      // Update both emotion and eye redness data
+      addEmotionPoint(result.emotions);
+      addEyeRednessPoint(result.eyeRedness);
       setLastEmotionUpdate(new Date());
-      console.log('Emotion detected:', emotions);
+      
+      console.log('Combined detection result:', result);
     } catch (error) {
-      console.error('Failed to detect emotion:', error);
-      // Fall back to random emotions if API fails
+      console.error('Failed to perform detection:', error);
+      // Fall back to random data if API fails
       addEmotionPoint({
         happy: Math.max(0, 0.5 + (Math.random() - 0.5) * 0.2),
         sad: Math.max(0, 0.1 + (Math.random() - 0.5) * 0.1),
@@ -48,6 +50,7 @@ export function VideoStream() {
         surprised: Math.max(0, 0.05 + (Math.random() - 0.5) * 0.05),
         angry: Math.max(0, 0.05 + (Math.random() - 0.5) * 0.05)
       });
+      addEyeRednessPoint(0.3 + (Math.random() - 0.5) * 0.1);
     } finally {
       setIsProcessingEmotion(false);
     }
@@ -55,28 +58,27 @@ export function VideoStream() {
 
   useEffect(() => {
     if (isStreaming) {
-      // Generate demo data for blink rate and eye redness every 2 seconds
+      // Generate demo data for blink rate only (emotion and eye redness now come from AI)
       const demoInterval = setInterval(() => {
         addBlinkRatePoint(15 + (Math.random() - 0.5) * 4);
-        addEyeRednessPoint(0.3 + (Math.random() - 0.5) * 0.1);
       }, 2000);
 
-      // Real emotion detection every 10 seconds
-      const emotionInterval = setInterval(() => {
-        detectEmotionFromCurrentFrame();
+      // Real AI detection (emotion + eye redness) every 10 seconds
+      const detectionInterval = setInterval(() => {
+        detectFromCurrentFrame();
       }, 10000);
 
-      // Store the emotion interval reference for cleanup
-      emotionIntervalRef.current = emotionInterval;
+      // Store the detection interval reference for cleanup
+      emotionIntervalRef.current = detectionInterval;
 
-      // Initial emotion detection after 2 seconds
+      // Initial detection after 2 seconds
       const initialTimeout = setTimeout(() => {
-        detectEmotionFromCurrentFrame();
+        detectFromCurrentFrame();
       }, 2000);
 
       return () => {
         clearInterval(demoInterval);
-        clearInterval(emotionInterval);
+        clearInterval(detectionInterval);
         clearTimeout(initialTimeout);
         if (emotionIntervalRef.current) {
           clearInterval(emotionIntervalRef.current);
@@ -186,14 +188,14 @@ export function VideoStream() {
             <div className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2">
                 <Brain className={`w-4 h-4 ${isProcessingEmotion ? 'animate-pulse text-blue-400' : 'text-green-400'}`} />
-                <span className="opacity-70">Emotion AI:</span>
+                <span className="opacity-70">AI Vision:</span>
                 <span className={`font-semibold ${isProcessingEmotion ? 'text-blue-400' : 'text-green-400'}`}>
                   {isProcessingEmotion ? 'Analyzing...' : 'Active'}
                 </span>
               </div>
               {lastEmotionUpdate && (
                 <div className="opacity-70">
-                  Last update: {lastEmotionUpdate.toLocaleTimeString()}
+                  Last scan: {lastEmotionUpdate.toLocaleTimeString()}
                 </div>
               )}
             </div>

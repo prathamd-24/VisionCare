@@ -1,6 +1,6 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Eye } from 'lucide-react';
+import { Eye, Brain } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
 
 export function EyeRednessGauge() {
@@ -34,9 +34,12 @@ export function EyeRednessGauge() {
           <Eye className="w-5 h-5 text-red-500" />
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Eye Redness</h2>
         </div>
-        <span className={`text-sm font-semibold ${getStatusColor()}`}>
-          {getStatusLabel()}
-        </span>
+        <div className="flex items-center gap-2">
+          <Brain className="w-4 h-4 text-blue-500" />
+          <span className={`text-sm font-semibold ${getStatusColor()}`}>
+            {getStatusLabel()}
+          </span>
+        </div>
       </div>
 
       <div className="mb-4">
