@@ -3,6 +3,18 @@ import { BaselineMetrics, AnomalyThresholds, LiveMetrics, AlertConfig } from '..
 import { MetricDataPoint, EmotionDataPoint, EnvironmentalDataPoint, AnomalyEvent, demoBlinkRateData, demoEyeRednessData, demoEmotionData, demoEnvironmentalData, demoAnomalies } from '../data/demoData';
 import { loadBaseline, saveBaseline, clearBaseline, detectAnomaly, getAnomalySeverity } from '../utils/baseline';
 
+interface FlaskSensorData {
+  timestamp: string;
+  temperature: string;
+  humidity: string;
+  ldr: string;
+}
+
+interface FlaskApiResponse {
+  status: string;
+  data: FlaskSensorData[];
+}
+
 interface MetricsContextType {
   blinkRateData: MetricDataPoint[];
   eyeRednessData: MetricDataPoint[];
@@ -17,6 +29,9 @@ interface MetricsContextType {
   alertConfig: AlertConfig;
   environmentalUrl: string;
   isDarkMode: boolean;
+  flaskSensorData: FlaskSensorData[];
+  isFlaskDataLoading: boolean;
+  flaskDataError: string | null;
 
   setBaseline: (baseline: BaselineMetrics | null) => void;
   addBlinkRatePoint: (value: number) => void;
@@ -32,6 +47,7 @@ interface MetricsContextType {
   dismissAnomaly: (timestamp: number) => void;
   setEnvironmentalUrl: (url: string) => void;
   fetchEnvironmentalData: () => Promise<void>;
+  fetchFlaskData: () => Promise<void>;
   toggleDarkMode: () => void;
 }
 
@@ -56,6 +72,11 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
     const stored = localStorage.getItem(DARK_MODE_KEY);
     return stored ? JSON.parse(stored) : false;
   });
+
+  // Flask data state
+  const [flaskSensorData, setFlaskSensorData] = useState<FlaskSensorData[]>([]);
+  const [isFlaskDataLoading, setIsFlaskDataLoading] = useState(false);
+  const [flaskDataError, setFlaskDataError] = useState<string | null>(null);
 
   const [liveMetrics, setLiveMetrics] = useState<LiveMetrics>({
     blinkRate: 15,
@@ -295,8 +316,66 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [environmentalUrl]);
 
+  const fetchFlaskData = useCallback(async () => {
+    setIsFlaskDataLoading(true);
+    setFlaskDataError(null);
+
+    try {
+      const response = await fetch('/getdata');
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result: FlaskApiResponse = await response.json();
+      
+      if (result.status === 'ok' && Array.isArray(result.data)) {
+        setFlaskSensorData(result.data);
+        
+        // Update environmental data with latest Flask data
+        const latestData = result.data[result.data.length - 1];
+        if (latestData) {
+          const envData: EnvironmentalDataPoint = {
+            timestamp: new Date(latestData.timestamp).getTime(),
+            temperature: parseFloat(latestData.temperature),
+            humidity: parseFloat(latestData.humidity),
+            light: parseFloat(latestData.ldr)
+          };
+          
+          setEnvironmentalData(prev => [...prev, envData].slice(-120));
+          setLiveMetrics(prev => ({
+            ...prev,
+            environmental: {
+              temperature: envData.temperature,
+              humidity: envData.humidity,
+              light: envData.light
+            }
+          }));
+        }
+      } else {
+        throw new Error('Invalid response format from server');
+      }
+    } catch (err) {
+      setFlaskDataError(err instanceof Error ? err.message : 'Failed to fetch data');
+      console.error('Error fetching Flask data:', err);
+    } finally {
+      setIsFlaskDataLoading(false);
+    }
+  }, []);
+
+  // Auto-fetch Flask data every 5 seconds
+  useEffect(() => {
+    fetchFlaskData(); // Initial fetch
+    
+    const interval = setInterval(() => {
+      fetchFlaskData();
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [fetchFlaskData]);
+
   const toggleDarkMode = useCallback(() => {
-    setIsDarkMode(prev => {
+    setIsDarkMode((prev: boolean) => {
       const newValue = !prev;
       localStorage.setItem(DARK_MODE_KEY, JSON.stringify(newValue));
       return newValue;
@@ -317,6 +396,9 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
     alertConfig,
     environmentalUrl,
     isDarkMode,
+    flaskSensorData,
+    isFlaskDataLoading,
+    flaskDataError,
     setBaseline,
     addBlinkRatePoint,
     addEyeRednessPoint,
@@ -331,6 +413,7 @@ export function MetricsProvider({ children }: { children: React.ReactNode }) {
     dismissAnomaly,
     setEnvironmentalUrl,
     fetchEnvironmentalData,
+    fetchFlaskData,
     toggleDarkMode
   };
 

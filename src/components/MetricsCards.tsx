@@ -3,7 +3,7 @@ import { Eye, Activity, Thermometer, Brain } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
 
 export function MetricsCards() {
-  const { liveMetrics, baseline } = useMetrics();
+  const { liveMetrics, baseline, flaskSensorData, flaskDataError } = useMetrics();
 
   const getDominantEmotion = () => {
     const emotions = liveMetrics.emotion;
@@ -128,9 +128,24 @@ export function MetricsCards() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border-l-4 border-orange-500 transition-colors">
-        <div className="flex items-center gap-2 mb-2">
-          <Thermometer className="w-5 h-5 text-orange-500" />
-          <h3 className="font-semibold text-gray-900 dark:text-white">Environment</h3>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Thermometer className="w-5 h-5 text-orange-500" />
+            <h3 className="font-semibold text-gray-900 dark:text-white">Environment</h3>
+          </div>
+          {flaskSensorData.length > 0 && !flaskDataError ? (
+            <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+              Flask Live
+            </span>
+          ) : flaskDataError ? (
+            <span className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full">
+              Demo
+            </span>
+          ) : (
+            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full">
+              Demo
+            </span>
+          )}
         </div>
         <div className="space-y-1">
           <div className="flex justify-between text-sm">

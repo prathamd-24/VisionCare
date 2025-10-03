@@ -6,6 +6,7 @@ import { EmotionTimeline } from './EmotionTimeline';
 import { EyeRednessGauge } from './EyeRednessGauge';
 import { EnvironmentPanel } from './EnvironmentPanel';
 import { AlertsPanel } from './AlertsPanel';
+import { DataTable } from './DataTable';
 
 export function Dashboard() {
   return (
@@ -29,6 +30,8 @@ export function Dashboard() {
         <EmotionTimeline />
         <EnvironmentPanel />
       </div>
+
+      <DataTable />
 
       <AlertsPanel />
     </div>

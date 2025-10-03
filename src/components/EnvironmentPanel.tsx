@@ -1,10 +1,17 @@
 import React from 'react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { Thermometer, Droplets, Sun } from 'lucide-react';
+import { Thermometer, Droplets, Sun, Database, RefreshCw } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
 
 export function EnvironmentPanel() {
-  const { environmentalData, baseline } = useMetrics();
+  const { 
+    environmentalData, 
+    baseline, 
+    flaskSensorData, 
+    isFlaskDataLoading, 
+    flaskDataError, 
+    fetchFlaskData 
+  } = useMetrics();
 
   const chartData = environmentalData.slice(-60).map(point => ({
     time: new Date(point.timestamp).toLocaleTimeString(),
@@ -31,7 +38,34 @@ export function EnvironmentPanel() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 transition-colors">
-      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Environmental Conditions</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Environmental Conditions</h2>
+          {isFlaskDataLoading && (
+            <RefreshCw className="w-4 h-4 text-blue-500 animate-spin" />
+          )}
+          {flaskDataError && (
+            <span className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full">
+              Flask API Error
+            </span>
+          )}
+          {flaskSensorData.length > 0 && !flaskDataError && (
+            <div className="flex items-center gap-1">
+              <Database className="w-4 h-4 text-green-500" />
+              <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+                Live Data
+              </span>
+            </div>
+          )}
+        </div>
+        <button
+          onClick={fetchFlaskData}
+          disabled={isFlaskDataLoading}
+          className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white rounded transition-colors"
+        >
+          Refresh
+        </button>
+      </div>
 
       {latest && (
         <div className="grid grid-cols-3 gap-4 mb-6">
