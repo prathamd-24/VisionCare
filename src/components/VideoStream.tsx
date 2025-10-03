@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { Camera, CameraOff, Play, Square, Brain } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
 import { captureFrameAsBase64, performCombinedDetection } from '../utils/emotionDetection';

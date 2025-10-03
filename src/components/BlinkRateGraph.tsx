@@ -1,10 +1,11 @@
-import React from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
-import { Activity } from 'lucide-react';
+import { Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { Activity, Wifi, WifiOff } from 'lucide-react';
 import { useMetrics } from '../context/MetricsContext';
+import { useBlinkDetectionWebSocket } from '../hooks/useBlinkDetectionWebSocket';
 
 export function BlinkRateGraph() {
   const { blinkRateData, baseline } = useMetrics();
+  const { isConnected: wsConnected, blinkStats } = useBlinkDetectionWebSocket();
 
   const chartData = blinkRateData.slice(-60).map(point => ({
     time: new Date(point.timestamp).toLocaleTimeString(),
@@ -16,9 +17,33 @@ export function BlinkRateGraph() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 transition-colors">
-      <div className="flex items-center gap-2 mb-4">
-        <Activity className="w-5 h-5 text-blue-500" />
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Blink Rate Over Time</h2>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-blue-500" />
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Blink Rate Over Time</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          {wsConnected ? (
+            <div className="flex items-center gap-1">
+              <Wifi className="w-4 h-4 text-green-500" />
+              <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 rounded-full">
+                Live WebSocket
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <WifiOff className="w-4 h-4 text-red-500" />
+              <span className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 rounded-full">
+                Demo Data
+              </span>
+            </div>
+          )}
+          {blinkStats && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Current: {blinkStats.recent_bpm.toFixed(1)} BPM
+            </span>
+          )}
+        </div>
       </div>
 
       <ResponsiveContainer width="100%" height={300}>
